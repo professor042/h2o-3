@@ -2231,8 +2231,8 @@ public class GLM extends ModelBuilder<GLMModel,GLMParameters,GLMOutput> {
             }
           }
 
-          if (_parms._lambda_search && (_parms._score_each_iteration || timeSinceLastScoring() > _scoringInterval)) { // todo: fix this 
-            _model._output.setSubmodelIdx(_model._output._best_lambda_idx = _model._output._selected_submodel_idx); // only score and update best model
+          if (_parms._lambda_search && (_parms._score_each_iteration || timeSinceLastScoring() > _scoringInterval)) {
+            _model._output.setSubmodelIdx(_model._output._best_submodel_idx); // only score and update best model
             scoreAndUpdateModel(); // update partial results
           }
           _job.update(_workPerIteration, "iter=" + _state._iter + " lmb=" + 

@@ -9,7 +9,7 @@ from h2o.estimators.glm import H2OGeneralizedLinearEstimator as glm
 def glm_alpha_lambda_arrays():
     # read in the dataset and construct training set (and validation set)
     d = h2o.import_file(path=pyunit_utils.locate("smalldata/logreg/prostate.csv"))
-    mL = glm(family='binomial',lambda_search=True, alpha=[0.1,0.5,0.9],solver='COORDINATE_DESCENT')
+    mL = glm(family='binomial',lambda_search=True, alpha=[0.9,0.5,0.1],solver='COORDINATE_DESCENT')
     mL.train(training_frame=d,x=[2,3,4,5,6,7,8],y=1)
     r = glm.getGLMRegularizationPath(mL)
     regKeys = ["alphas", "lambdas", "explained_deviance_valid", "explained_deviance_train"]
@@ -29,16 +29,14 @@ def glm_alpha_lambda_arrays():
         mr = glm.getGLMRegularizationPath(m)
         cs = r['coefficients'][l]
         cs_norm = r['coefficients_std'][l]
-        pyunit_utils.assertEqualCoeffDicts(cs, m.coef())
-        pyunit_utils.assertEqualCoeffDicts(cs_norm, m.coef_norm())
+        pyunit_utils.assertEqualCoeffDicts(cs, m.coef(), tol=1e-4)
+        pyunit_utils.assertEqualCoeffDicts(cs_norm, m.coef_norm(), tol=1e-4)
         startVal = extractNextCoeff(cs_norm, orderedCoeffNames, startVal) # prepare startval for next round
         p = m.model_performance(d)
         devm = 1-p.residual_deviance()/p.null_deviance()
         devn = r['explained_deviance_train'][l]
-        print(devm)
-        print(devn)
         assert abs(devm - devn) < 1e-4
-        pyunit_utils.assertEqualRegPaths(regKeys, r, l, mr) # check all values from regPaths
+        pyunit_utils.assertEqualRegPaths(regKeys, r, l, mr, tol=1e-4) # check all values from regPaths
         if (l == best_submodel_index): # check training metrics, should equal for best submodel index
             pyunit_utils.assertEqualModelMetrics(m._model_json["output"]["training_metrics"],
                                     mL._model_json["output"]["training_metrics"])
