@@ -2187,18 +2187,21 @@ public class GLM extends ModelBuilder<GLMModel,GLMParameters,GLMOutput> {
       System.arraycopy(_state.ginfo()._gradient,0,_ginfoStart._gradient,0,_ginfoStart._gradient.length);
       _betaDiffStart = _state.getBetaDiff();
       // alpha, lambda search loop
+      int submodelCount = 0;
       for (int alphaInd = 0; alphaInd < _parms._alpha.length; alphaInd++) {
         _state.setAlpha(_parms._alpha[alphaInd]);   // loop through the alphas
         coldStart();  // reset beta, lambda, currGram
         _model._output._selected_alpha_idx = alphaInd;
        // if (_state.getLambdaNull()) _parms._lambda[0] = _gmax/Math.max(1e-2, _parms._alpha[alphaInd]);
-        for (int i = 0; i < _parms._lambda.length; ++i) {  // lambda search
+        for (int i = 0; i < _parms._lambda.length; ++i) {  // for lambda search, can quit before it is done
           if (_job.stop_requested() || (timeout() && _model._output._submodels.length > 0))
             break;  //need at least one submodel on timeout to avoid issues.
-          if (_parms._max_iterations != -1 && _state._iter >= _parms._max_iterations) break;
+          if (_parms._max_iterations != -1 && _state._iter >= _parms._max_iterations) 
+            break;// iterations accumulate across all lambda/alpha values
           _model._output._selected_lambda_idx = i;
-          _model._output._selected_submodel_idx = alphaInd*_parms._lambda.length+i;
+          _model._output._selected_submodel_idx = submodelCount;
           Submodel sm = computeSubmodel(_model._output._selected_submodel_idx, _parms._lambda[i]);
+          submodelCount++;  // updata submodel index count here
           double trainDev = sm.devianceTrain; // this is stupid, they are always -1 except for lambda_search=True
           double testDev = sm.devianceTest;
           devHistoryTest[_model._output._selected_submodel_idx % devHistoryTest.length] = 
